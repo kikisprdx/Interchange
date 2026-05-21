@@ -1,14 +1,14 @@
-import torch 
-import numpy as np
 import random
+import torch
 from torch.utils.data import Dataset
+from transformers import BertTokenizer
 
-numbers = range(0,10)
+numbers = range(0, 10)
 ops = ['+', '-']
 outcomes = ['positive', 'negative', 'zero']
 
 label_dict = {"positive": 0, "negative": 1, "zero": 2}
-vocab = ["[PAD]", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-"]
+SEQ_LEN = 5  # [CLS] x op y [SEP]
 
 def generate_data():
     with open("data/arithmetic.txt", "w") as f:
@@ -26,12 +26,8 @@ def generate_data():
                     f.write(row)
 
 class ArithmeticData:
-    def __init__(self, data_file):
-        train_ratio = 0.7
-        dev_ratio = 0.15
-        self.word_to_id = {w: i for i, w in enumerate(vocab)}
-        self.id_to_word = {i: w for i, w in enumerate(vocab)}
-        self.vocab_size = len(vocab)
+    def __init__(self, data_file, tokenizer_vocab_path):
+        self.tokenizer = BertTokenizer(tokenizer_vocab_path)
         self.output_classes = 3
 
         with open(data_file) as f:
@@ -40,30 +36,33 @@ class ArithmeticData:
         random.shuffle(lines)
 
         n = len(lines)
-        n_train = int(n * train_ratio)
-        n_dev = int(n * dev_ratio)
+        n_train = int(n * 0.7)
+        n_dev = int(n * 0.15)
 
-        self.train = ArithmeticDataset(lines[:n_train], self.word_to_id)
-        self.dev   = ArithmeticDataset(lines[n_train:n_train + n_dev], self.word_to_id)
-        self.test  = ArithmeticDataset(lines[n_train + n_dev:], self.word_to_id)
+        self.train = ArithmeticDataset(lines[:n_train], self.tokenizer)
+        self.dev   = ArithmeticDataset(lines[n_train:n_train + n_dev], self.tokenizer)
+        self.test  = ArithmeticDataset(lines[n_train + n_dev:], self.tokenizer)
 
 class ArithmeticDataset(Dataset):
-    def __init__(self, lines, word_to_id):
+    def __init__(self, lines, tokenizer):
         self.raw_x = []
         self.raw_y = []
         for line in lines:
             expr, _, outcome = line.split(", ")
             x, op, y = expr.split()
-            ids = np.array([word_to_id[x], word_to_id[op], word_to_id[y]])
+            toks = ["[CLS]", x, op, y, "[SEP]"]
+            ids = tokenizer.convert_tokens_to_ids(toks)
             self.raw_x.append(ids)
             self.raw_y.append(label_dict[outcome])
-        self.num_examples = len(self.raw_x) 
+        self.num_examples = len(self.raw_x)
 
     def __len__(self):
         return self.num_examples
 
     def __getitem__(self, i):
         return (torch.tensor(self.raw_x[i], dtype=torch.long),
+                torch.tensor([0] * SEQ_LEN, dtype=torch.long),
+                torch.tensor([1.] * SEQ_LEN, dtype=torch.float),
                 self.raw_y[i])
 
 
