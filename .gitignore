@@ -16,5 +16,9 @@ intervention/forward_tree_dump.txt
 .DS_Store
 .env
 .claude
+*.ju.py
 /data/*
 !/data/tokenization
+experiment/
+interchange_analysis.md
+interchange_analysis.ipynb
