@@ -24,3 +24,4 @@ intervention/forward_tree_dump.txt
 experiment/
 interchange_analysis.md
 interchange_analysis.ipynb
+*.csv
