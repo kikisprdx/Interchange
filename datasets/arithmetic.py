@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from transformers import BertTokenizer
 
-numbers = range(0, 10)
+numbers = range(-200, 201)
 ops = ['+', '-']
 outcomes = ['positive', 'negative', 'zero']
 
@@ -11,7 +11,7 @@ label_dict = {"positive": 0, "negative": 1, "zero": 2}
 SEQ_LEN = 5  # [CLS] x op y [SEP]
 
 def generate_data():
-    with open("data/arithmetic.txt", "w") as f:
+    with open("data/arithmetic.csv", "w") as f:
         for x in numbers:
             for y in numbers:
                 for op in ops:
