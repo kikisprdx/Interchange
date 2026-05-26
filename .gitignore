@@ -14,6 +14,14 @@ intervention/forward_tree_dump.txt
 *.swp
 .ipynb_checkpoints/*
 .DS_Store
-
+.env
+.claude
+*.ju.py
 /data/*
 !/data/tokenization
+/env
+*.ju.py
+experiment/
+interchange_analysis.md
+interchange_analysis.ipynb
+*.csv

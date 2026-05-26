@@ -9,24 +9,23 @@ from compgraphs.abstractable import AbstractableCompGraph
 from intervention import LOC, ComputationGraph, GraphNode
 
 
-class MQNLI_Bert_CompGraph(ComputationGraph):
-    """A computation graph for the BERT model on the MQNLI task.
+class Arithmetic_Bert_CompGraph(ComputationGraph):
+    """A computation graph for the BERT model on the Arithmetic task.
 
-    This class constructs the DAG representing the forward pass of a BERT model,
-    allowing for interventions at various stages (embeddings, layers, pooling, etc.).
+    This class constructs the DAG representing the forward pass of a BERT model
+    trained on simple arithmetic expressions ([CLS] x op y [SEP]), allowing for
+    interventions at various stages.
     """
 
     def __init__(
         self, bert_model: Any, root_output_device: Optional[torch.device] = None
     ):
-        """Initialize the MQNLI Bert computation graph.
+        """Initialize the Arithmetic Bert computation graph.
 
-        :param bert_model: The BERT model instance (must be configured for MQNLI).
+        :param bert_model: The BERT model instance (fine-tuned on arithmetic data).
         :param root_output_device: Optional device for the root output.
         """
-        if bert_model.task != "mqnli":
-            raise ValueError("The model must be for MQNLI!")
-
+        # We assume the model follows the same structure as the MQNLI BERT model
         self.model = bert_model
         bert = self.model.bert
 
@@ -58,9 +57,10 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
         node_logits = GraphNode(node_pool, name="logits", forward=self._logits_forward)
 
         # 7. Define Root (Argmax) Node
+        # The arithmetic task labels are positive (0), negative (1), zero (2)
         node_root = GraphNode(node_logits, name="root", forward=self._root_forward)
 
-        super(MQNLI_Bert_CompGraph, self).__init__(
+        super(Arithmetic_Bert_CompGraph, self).__init__(
             node_root, root_output_device=root_output_device
         )
 
@@ -74,7 +74,10 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
         return x
 
     def _metainfo_forward(self, input_tuple: tuple) -> Dict[str, Any]:
-        """Generate extended attention masks and other metadata."""
+        """Generate extended attention masks and other metadata.
+
+        The Arithmetic dataset returns (input_ids, token_type_ids, attention_mask, label).
+        """
         bert = self.model.bert
         input_ids, _, attention_mask = input_tuple[:3]
         input_shape = input_ids.shape
@@ -137,19 +140,19 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
         return torch.argmax(x, dim=1)
 
 
-class Abstr_MQNLI_Bert_CompGraph(AbstractableCompGraph):
-    """An abstractable version of the MQNLI BERT computation graph."""
+class Abstr_Arithmetic_Bert_CompGraph(AbstractableCompGraph):
+    """An abstractable version of the Arithmetic BERT computation graph."""
 
     def __init__(
         self,
-        base_compgraph: MQNLI_Bert_CompGraph,
+        base_compgraph: Arithmetic_Bert_CompGraph,
         intermediate_nodes: List[str],
         interv_info: Any = None,
         root_output_device: Optional[torch.device] = None,
     ):
-        """Initialize the abstractable MQNLI BERT graph.
+        """Initialize the abstractable Arithmetic BERT graph.
 
-        :param base_compgraph: The full MQNLI BERT graph.
+        :param base_compgraph: The full Arithmetic BERT graph.
         :param intermediate_nodes: Nodes to keep in the abstract graph.
         :param interv_info: Optional intervention metadata (e.g., target locations).
         :param root_output_device: Optional device for the root output.
@@ -166,7 +169,7 @@ class Abstr_MQNLI_Bert_CompGraph(AbstractableCompGraph):
             node_name: node.forward for node_name, node in base_compgraph.nodes.items()
         }
 
-        super(Abstr_MQNLI_Bert_CompGraph, self).__init__(
+        super(Abstr_Arithmetic_Bert_CompGraph, self).__init__(
             full_graph=full_graph,
             root_node_name="root",
             abstract_nodes=intermediate_nodes,
@@ -180,8 +183,14 @@ class Abstr_MQNLI_Bert_CompGraph(AbstractableCompGraph):
         return self.base.device
 
     def get_indices(self, node: str) -> List[Any]:
-        """Get the indices for intervention for a given node."""
+        """Get the indices for intervention for a given node.
+
+        Usually used to target specific tokens (e.g., x, op, or y).
+        """
         if re.match(r".*bert_layer_[0-9]*", node):
-            return [LOC[:, i, :] for i in self.interv_info["target_locs"]]
+            # Target specific locations if provided in interv_info
+            if self.interv_info and "target_locs" in self.interv_info:
+                return [LOC[:, i, :] for i in self.interv_info["target_locs"]]
+            return [LOC[:, :, :]]  # Default to whole tensor
         else:
             raise ValueError(f"Cannot get indices for node {node}")
