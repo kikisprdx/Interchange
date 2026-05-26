@@ -18,7 +18,9 @@ class ArithmeticBertModule(nn.Module):
         # classification head: drop some activations to reduce overfitting,
         # then project from 768 dimensions down to num_labels (3)
         self.dropout = nn.Dropout(dropout)
-        self.classifier = nn.Linear(hidden_size, num_labels)
+        # named 'logits' so the compgraph in compgraphs/arithmetic_bert.py can
+        # call self.model.logits(x) directly
+        self.logits = nn.Linear(hidden_size, num_labels)
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         """
@@ -48,9 +50,14 @@ class ArithmeticBertModule(nn.Module):
         cls_output = hidden_states[-1][:, 0, :]
 
         # dropout + linear projection → (batch, num_labels)
-        logits = self.classifier(self.dropout(cls_output))
+        logits = self.logits(self.dropout(cls_output))
 
         return logits, hidden_states
+
+    @property
+    def device(self) -> torch.device:
+        # compgraph needs to know which device the model is on
+        return next(self.parameters()).device
 
     def config(self):
         """Returns the model's hyperparameters as a plain dict."""
