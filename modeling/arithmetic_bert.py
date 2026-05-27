@@ -45,9 +45,9 @@ class ArithmeticBertModule(nn.Module):
         # hidden_states is a tuple of 13 tensors: (batch, seq_len, 768)
         hidden_states = outputs.hidden_states
 
-        # grab the [CLS] token (position 0) from the final layer (index -1)
-        # shape: (batch, 768)
-        cls_output = hidden_states[-1][:, 0, :]
+        # pooler_output = Linear(768,768) + Tanh applied to [CLS] token
+        # this matches what compgraphs/arithmetic_bert.py does: embed → layers → pool → logits
+        cls_output = outputs.pooler_output
 
         # dropout + linear projection → (batch, num_labels)
         logits = self.logits(self.dropout(cls_output))
