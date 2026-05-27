@@ -25,3 +25,5 @@ experiment/
 interchange_analysis.md
 interchange_analysis.ipynb
 *.csv
+checkpoints/
+checkpoints/
