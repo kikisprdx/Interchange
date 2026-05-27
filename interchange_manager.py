@@ -65,7 +65,7 @@ class CSVExperimentManager(ExperimentManagerInterface):
         row = {c: "" for c in cols}
         row.update({k: str(v) for k, v in opts.items()})
         row["id"] = str(new_id)
-        row.setdefault("status", str(STATUS_READY))
+        row["status"] = str(opts.get("status", STATUS_READY))
         rows.append(row)
         self._write(cols, rows)
         return new_id

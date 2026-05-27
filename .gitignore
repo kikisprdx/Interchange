@@ -17,6 +17,7 @@ intervention/forward_tree_dump.txt
 .env
 .claude
 *.ju.py
+poetry.lock
 /data/*
 !/data/tokenization
 /env

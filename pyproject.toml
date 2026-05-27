@@ -3,11 +3,12 @@ name = "interchange"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Kikis",email = "kikispcmr@gmail.com"}
+    {name = "Kikis", email = "kikispcmr@gmail.com"}
 ]
-requires-python = "==3.12.*"
+requires-python = ">=3.12, <3.13"
 dependencies = [
-    "torch>=1.6.0",
+    "pytest>=9.0.3",
+    "torch>=2.0.0",
     "numpy",
     "boolean.py",
     "transformers>=4.30.0",
