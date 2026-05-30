@@ -27,3 +27,4 @@ interchange_analysis.ipynb
 *.csv
 checkpoints/
 checkpoints/
+pipeline/
