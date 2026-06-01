@@ -6,7 +6,8 @@ from torch.utils.data import DataLoader
 from transformers import get_linear_schedule_with_warmup
 from tqdm import tqdm
 
-sys.path.insert(0, os.path.join("vendor", "interchange"))
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(1, os.path.join("vendor", "interchange"))
 
 from datasets.mqnli import MQNLIBertData
 from modeling.arithmetic_bert import ArithmeticBertModule
