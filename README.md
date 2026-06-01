@@ -31,9 +31,10 @@ run_arithmetic.py   arithmetic dataset smoke test
 
 **abstractable graph** — `AbstractableCompGraph` takes a full graph spec and a list of `abstract_nodes` to keep, collapsing everything else into composed forward functions. used to define the "low-level" graph that interchange interventions run on.
 
-**interchange intervention** — patch the hidden state at a chosen node from an *intervention* input into a *base* input's forward pass. record whether the base output changes to match the intervention output. this tests whether that node causally mediates the high-level behaviour.
+**interchange intervention** — patch the hidden state at a chosen node from an _intervention_ input into a _base_ input's forward pass. record whether the base output changes to match the intervention output. this tests whether that node causally mediates the high-level behaviour.
 
 **3-bit outcome encoding** — each (base, interv) pair produces a result `N` in 0–7:
+
 - bit 2: `high_effect_eq` — high-level model output changed
 - bit 1: `base_eq` — low base output == high base output
 - bit 0: `interv_eq` — low interv output == high interv output
@@ -58,13 +59,13 @@ CSV-backed experiment queue. each row is one job with fields from `INTERCHANGE_D
 
 **status values:**
 
-| value | meaning |
-|-------|---------|
-| 0 | ready |
-| 1 | running |
-| 2 | interchange done |
-| 3 | queued for graph analysis |
-| 4 | graph analysis done |
+| value | meaning                   |
+| ----- | ------------------------- |
+| 0     | ready                     |
+| 1     | running                   |
+| 2     | interchange done          |
+| 3     | queued for graph analysis |
+| 4     | graph analysis done       |
 
 **subcommands:**
 
@@ -107,3 +108,5 @@ return dict must include: `save_path`, `res_0_count`…`res_7_count`, `max_cliqu
 ```bash
 python main.py arithmetic   # generates data + loads dataset, prints split sizes + sample
 ```
+
+# Notes
