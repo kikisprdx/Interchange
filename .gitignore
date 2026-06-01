@@ -27,3 +27,5 @@ interchange_analysis.md
 interchange_analysis.ipynb
 *.csv
 poetry.lock
+*.pt 
+*.pth
