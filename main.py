@@ -1,27 +1,48 @@
 import argparse
 import os
+import subprocess
+
+VENDOR_MQNLI = os.path.join("vendor", "interchange", "mqnli")
+MQNLI_SIZE = 50_000
 
 
 def main():
     parser = argparse.ArgumentParser(prog="interchange")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("generate")
+    gen_p = sub.add_parser("generate")
+    gen_p.add_argument("task", choices=["arithmetic", "mqnli"])
 
     train_p = sub.add_parser("train")
-    train_p.add_argument("task", choices=["arithmetic"])
+    train_p.add_argument("task", choices=["arithmetic", "mqnli"])
 
     args = parser.parse_args()
 
     if args.cmd == "generate":
-        from datasets.arithmetic import generate_data
-        os.makedirs("data", exist_ok=True)
-        generate_data()
-        print("generated data/arithmetic.csv")
+        if args.task == "arithmetic":
+            from datasets.arithmetic import generate_data
+            os.makedirs("data", exist_ok=True)
+            generate_data()
+            print("generated data/arithmetic.csv")
+
+        elif args.task == "mqnli":
+            save_dir = os.path.abspath("data/mqnli")
+            os.makedirs(save_dir, exist_ok=True)
+            data_path = os.path.abspath(os.path.join(VENDOR_MQNLI, "data"))
+            subprocess.run(
+                ["python", "generate_data.py", str(MQNLI_SIZE), save_dir, data_path],
+                cwd=os.path.abspath(VENDOR_MQNLI),
+                check=True,
+            )
+            print(f"generated mqnli data → {save_dir}")
 
     elif args.cmd == "train":
         if args.task == "arithmetic":
             from train_arithmetic_bert import main as train
+            train()
+
+        elif args.task == "mqnli":
+            from train_mqnli_bert import main as train
             train()
 
 
