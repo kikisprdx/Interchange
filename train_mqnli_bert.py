@@ -30,10 +30,11 @@ def evaluate(model, dataset, device, loss_fxn):
     model.eval()
     with torch.no_grad():
         for batch in loader:
-            input_ids = batch[0].to(device)
+            input_ids      = batch[0].to(device)
+            token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
             labels = batch[4].to(device) if isinstance(batch[4], torch.Tensor) else torch.tensor(batch[4]).to(device)
-            logits, _ = model(input_ids, attention_mask)
+            logits, _ = model(input_ids, attention_mask, token_type_ids)
             total_loss += loss_fxn(logits, labels).item()
             correct += (logits.argmax(dim=1) == labels).sum().item()
             total += labels.size(0)
@@ -64,21 +65,23 @@ def main():
     loss_fxn = nn.CrossEntropyLoss()
 
     total_steps = EPOCHS * len(train_loader)
-    warmup_steps = int(LR_WARMUP_RATIO * total_steps)
+    warmup_steps = int(LR_WARMUP_RATIO * len(train_loader))
     scheduler = get_linear_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
+    best_dev_acc = 0.0
     for epoch in range(EPOCHS):
         model.train()
         total_loss = total = 0
         bar = tqdm(train_loader, desc=f"epoch {epoch + 1}/{EPOCHS}", leave=False)
 
         for step, batch in enumerate(bar, 1):
-            input_ids = batch[0].to(device)
+            input_ids      = batch[0].to(device)
+            token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
             labels = batch[4].to(device) if isinstance(batch[4], torch.Tensor) else torch.tensor(batch[4]).to(device)
 
             optimizer.zero_grad()
-            logits, _ = model(input_ids, attention_mask)
+            logits, _ = model(input_ids, attention_mask, token_type_ids)
             loss = loss_fxn(logits, labels)
             loss.backward()
             optimizer.step()
@@ -94,8 +97,13 @@ def main():
         dev_acc, dev_loss = evaluate(model, data.dev, device, loss_fxn)
         print(f"epoch {epoch + 1}/{EPOCHS} | train loss {train_loss:.4f} | val loss {dev_loss:.4f} | val acc {dev_acc:.3f}")
 
-    torch.save(model.state_dict(), FINETUNED_PATH)
-    print(f"saved → {FINETUNED_PATH}")
+        if dev_acc > best_dev_acc:
+            best_dev_acc = dev_acc
+            torch.save(model.state_dict(), FINETUNED_PATH)
+            print(f"  ↑ best model saved (val acc {best_dev_acc:.3f})")
 
+    print(f"saved best model → {FINETUNED_PATH}")
+
+    model.load_state_dict(torch.load(FINETUNED_PATH))
     test_acc, test_loss = evaluate(model, data.test, device, loss_fxn)
     print(f"test loss {test_loss:.4f} | test acc {test_acc:.3f}")
