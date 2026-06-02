@@ -50,9 +50,15 @@ def main():
         print(f"Generated {DATA_FILE}")
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    tokenizer.add_tokens([str(i) for i in range(-200, 201)])
+    tokens_to_add = [str(i) for i in range(-200, 201) if str(i) not in tokenizer.vocab]
+    tokenizer.add_tokens(tokens_to_add)
     os.makedirs(VOCAB_DIR, exist_ok=True)
     vocab_path = tokenizer.save_vocabulary(VOCAB_DIR)[0]
+    # save_vocabulary only writes self.vocab, not added_tokens — append manually
+    # so ArithmeticData's BertTokenizer(vocab_path) finds these tokens
+    with open(vocab_path, 'a', encoding='utf-8') as f:
+        for token in tokens_to_add:
+            f.write(token + '\n')
 
     data = ArithmeticData(DATA_FILE, vocab_path)
     print(f"train: {len(data.train)}  dev: {len(data.dev)}  test: {len(data.test)}")
