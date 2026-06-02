@@ -13,6 +13,11 @@ class ArithmeticBertModule(nn.Module):
         self.bert = BertModel.from_pretrained("bert-base-uncased")
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
+        # add every arithmetic number as a single token so the model sees
+        # "-150" or "47" as one unit rather than split subword pieces
+        self.tokenizer.add_tokens([str(i) for i in range(-200, 201)])
+        self.bert.resize_token_embeddings(len(self.tokenizer))
+
         hidden_size = self.bert.config.hidden_size  # 768 for bert-base
 
         # classification head: drop some activations to reduce overfitting,

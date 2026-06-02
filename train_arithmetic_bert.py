@@ -46,6 +46,7 @@ def main():
         print(f"Generated {DATA_FILE}")
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    tokenizer.add_tokens([str(i) for i in range(-200, 201)])
     os.makedirs(VOCAB_DIR, exist_ok=True)
     vocab_path = tokenizer.save_vocabulary(VOCAB_DIR)[0]
 
