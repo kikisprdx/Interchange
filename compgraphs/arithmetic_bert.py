@@ -117,11 +117,11 @@ class Arithmetic_Bert_CompGraph(ComputationGraph):
 
             layer_outputs = layer_module(
                 hidden_states,
-                attention_mask=metainfo.get("attention_mask"),
-                head_mask=layer_head_mask,
-                encoder_hidden_states=metainfo.get("encoder_hidden_states"),
-                encoder_attention_mask=metainfo.get("encoder_extended_attention_mask"),
-                output_attentions=metainfo.get("output_attentions"),
+                metainfo.get("attention_mask"),
+                layer_head_mask,
+                metainfo.get("encoder_hidden_states"),
+                metainfo.get("encoder_extended_attention_mask"),
+                metainfo.get("output_attentions"),
             )
             return layer_outputs[0]
 
