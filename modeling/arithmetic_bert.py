@@ -27,7 +27,7 @@ class ArithmeticBertModule(nn.Module):
         # call self.model.logits(x) directly
         self.logits = nn.Linear(hidden_size, num_labels)
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, token_type_ids: torch.Tensor = None):
         """
         Args:
             input_ids:      (batch, seq_len)  — token ids from tokenizer
@@ -44,6 +44,7 @@ class ArithmeticBertModule(nn.Module):
         outputs = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
             output_hidden_states=True,  # gives us all 13 layers
         )
 
