@@ -6,12 +6,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import BertTokenizer, get_linear_schedule_with_warmup
 
-from datasets.arithmetic import ArithmeticData, generate_data
+from reproduction_datasets.arithmetic import ArithmeticData, generate_data
 from modeling.arithmetic_bert import ArithmeticBertModule
 
 # paths
 DATA_FILE = "data/arithmetic.csv"
-VOCAB_DIR = "/tmp/arithmetic_vocab"
+VOCAB_DIR = "data/arithmetic_vocab"
 CHECKPOINT_DIR = "checkpoints"
 PRETRAINED_PATH = os.path.join(CHECKPOINT_DIR, "bert_arithmetic_pretrained.pt")
 FINETUNED_PATH = os.path.join(CHECKPOINT_DIR, "bert_arithmetic_finetuned.pt")
@@ -103,7 +103,6 @@ def main():
             labels = batch[3].to(device)
 
             optimizer.zero_grad()
-            logits, _ = model(input_ids, attention_mask)
             logits, _ = model(input_ids, attention_mask, token_type_ids)
             loss = loss_fxn(logits, labels)
             loss.backward()

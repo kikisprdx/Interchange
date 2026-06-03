@@ -107,7 +107,7 @@ def test_dataset_pipeline():
         return
 
     import tempfile
-    from datasets.arithmetic import ArithmeticData
+    from reproduction_datasets.arithmetic import ArithmeticData
 
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     tokens_to_add = [str(i) for i in range(-200, 201) if str(i) not in tokenizer.vocab]

@@ -3,7 +3,7 @@ import pytest
 import torch
 import tempfile
 
-from datasets.arithmetic import generate_data, ArithmeticData, ArithmeticDataset, label_dict, SEQ_LEN
+from reproduction_datasets.arithmetic import generate_data, ArithmeticData, ArithmeticDataset, label_dict, SEQ_LEN
 
 CLS_ID = 101
 SEP_ID = 102

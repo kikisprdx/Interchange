@@ -19,9 +19,9 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 import torch
 from torch.utils.data import DataLoader, Subset
 
-import intervention
-from intervention.utils import serialize
-from intervention.location import Location
+import pipeline as intervention
+from pipeline.utils import serialize
+from pipeline.location import Location
 
 
 def _to_bool_int(value: bool) -> int:

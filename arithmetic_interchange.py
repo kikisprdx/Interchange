@@ -48,6 +48,7 @@ from causal_abstraction.arithmetic_interchange import (
 )
 from compgraphs.arithmetic_bert import Arithmetic_Bert_CompGraph, Abstr_Arithmetic_Bert_CompGraph
 from compgraphs.arithmetic_logic import Abstr_Arithmetic_Logic_CompGraph
+from modeling.arithmetic_bert import ArithmeticBertModule
 
 DEFAULT_HIGH_NODES = ["x_value", "y_value", "op", "result", "sign"]
 DEFAULT_TOKEN_LOCS = [0, 1, 2, 3, 4]  # [CLS], x, op, y, [SEP]
@@ -86,12 +87,10 @@ def load_finetuned_bert_model(model_path: str, device: torch.device) -> torch.nn
     elif isinstance(obj, dict) and isinstance(obj.get("module"), torch.nn.Module):
         model = obj["module"]
     else:
-        raise ValueError(
-            "Could not load a complete BERT model from model_path. This script "
-            "expects torch.load(model_path) to return an nn.Module or a dict with "
-            "a 'model'/'module' nn.Module. If your checkpoint only stores a "
-            "state_dict, instantiate the model first and then load the state_dict."
-        )
+        model = ArithmeticBertModule(num_labels=3)
+        state_dict = obj if isinstance(obj, dict) else obj
+        model.load_state_dict(state_dict)
+        model = model.to(device)
 
     if hasattr(model, "module") and isinstance(model.module, torch.nn.Module):
         model = model.module

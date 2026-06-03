@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from datasets.arithmetic import ArithmeticDataset, label_dict, vocab, numbers, ops, outcomes
+from reproduction_datasets.arithmetic import ArithmeticDataset, label_dict, vocab, numbers, ops, outcomes
 from pipeline.graph       import ComputationGraph
 from pipeline.graph_input import GraphInput
 from pipeline.graph_node  import GraphNode

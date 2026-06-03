@@ -28,7 +28,7 @@ from typing import Any, Callable, Dict, List, Optional
 import torch
 
 from compgraphs.abstractable import AbstractableCompGraph
-from intervention import ComputationGraph, GraphNode
+from pipeline import ComputationGraph, GraphNode
 
 PLUS = 0
 MINUS = 1

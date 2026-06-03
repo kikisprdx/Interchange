@@ -1,6 +1,6 @@
 from __future__ import annotations
-from intervention import ComputationGraph
-from intervention import GraphNode
+from pipeline import ComputationGraph
+from pipeline import GraphNode
 
 from typing import Any, Dict, List, Callable, Set, Optional, Union
 import torch

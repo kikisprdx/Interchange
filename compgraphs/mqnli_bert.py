@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional
 import torch
 
 from compgraphs.abstractable import AbstractableCompGraph
-from intervention import LOC, ComputationGraph, GraphNode
+from pipeline import LOC, ComputationGraph, GraphNode
 
 
 class MQNLI_Bert_CompGraph(ComputationGraph):

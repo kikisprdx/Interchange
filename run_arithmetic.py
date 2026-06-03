@@ -1,6 +1,6 @@
 import os
 from transformers import BertTokenizer
-from datasets.arithmetic import generate_data, ArithmeticData
+from reproduction_datasets.arithmetic import generate_data, ArithmeticData
 
 
 DATA_FILE = "data/arithmetic.csv"
