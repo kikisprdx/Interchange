@@ -13,6 +13,14 @@ class ArithmeticBertModule(nn.Module):
         self.bert = BertModel.from_pretrained("bert-base-uncased")
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
+        # add arithmetic numbers not already in the base vocab as single tokens
+        # so ArithmeticData's convert_tokens_to_ids finds them instead of [UNK]
+        tokens_to_add = [
+            str(i) for i in range(-200, 201) if str(i) not in self.tokenizer.vocab
+        ]
+        self.tokenizer.add_tokens(tokens_to_add)
+        self.bert.resize_token_embeddings(len(self.tokenizer))
+
         hidden_size = self.bert.config.hidden_size  # 768 for bert-base
 
         # classification head: drop some activations to reduce overfitting,
@@ -22,7 +30,12 @@ class ArithmeticBertModule(nn.Module):
         # call self.model.logits(x) directly
         self.logits = nn.Linear(hidden_size, num_labels)
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, token_type_ids: torch.Tensor = None):
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        token_type_ids: torch.Tensor = None,
+    ):
         """
         Args:
             input_ids:      (batch, seq_len)  — token ids from tokenizer

@@ -1,18 +1,34 @@
+import argparse
 import csv
 import os
 import shlex
 import subprocess
-import argparse
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from experiment_interchange_interface import (
+    STATUS_GRAPH_READY,
+    STATUS_INTERCHANGE_DONE,
+    STATUS_READY,
     ExperimentManagerInterface,
-    STATUS_READY, STATUS_INTERCHANGE_DONE, STATUS_GRAPH_READY,
 )
 
-HIGH_NODES = ["sentence_q", "subj_adj", "subj_noun", "neg", "v_adv", "v_verb",
-              "vp_q", "obj_adj", "obj_noun", "obj", "vp", "v_bar", "negp", "subj"]
+HIGH_NODES = [
+    "sentence_q",
+    "subj_adj",
+    "subj_noun",
+    "neg",
+    "v_adv",
+    "v_verb",
+    "vp_q",
+    "obj_adj",
+    "obj_noun",
+    "obj",
+    "vp",
+    "v_bar",
+    "negp",
+    "subj",
+]
 
 INTERCHANGE_DEFAULT_OPTS = {
     "data_path": "",
@@ -34,7 +50,9 @@ class CSVExperimentManager(ExperimentManagerInterface):
         if not os.path.exists(csv_path):
             if default_opts is None:
                 raise ValueError("Must provide default_opts when creating new CSV")
-            cols = ["id", "status"] + [k for k in default_opts if k not in ("id", "status")]
+            cols = ["id", "status"] + [
+                k for k in default_opts if k not in ("id", "status")
+            ]
             self._write(cols, [])
 
     def _read(self) -> tuple[List[str], List[Dict]]:
@@ -65,7 +83,7 @@ class CSVExperimentManager(ExperimentManagerInterface):
         row = {c: "" for c in cols}
         row.update({k: str(v) for k, v in opts.items()})
         row["id"] = str(new_id)
-        row["status"] = str(opts.get("status", STATUS_READY))
+        row.setdefault("status", str(STATUS_READY))
         rows.append(row)
         self._write(cols, rows)
         return new_id
@@ -84,7 +102,9 @@ class CSVExperimentManager(ExperimentManagerInterface):
         result = [r for r in rows if int(r.get("status", 0)) == status]
         return result[:n] if n is not None else result
 
-    def query(self, cols=None, status=None, abstraction=None, id=None, limit=None) -> List[Dict]:
+    def query(
+        self, cols=None, status=None, abstraction=None, id=None, limit=None
+    ) -> List[Dict]:
         _, rows = self._read()
         if status is not None:
             rows = [r for r in rows if int(r.get("status", 0)) == status]
@@ -111,13 +131,18 @@ class CSVExperimentManager(ExperimentManagerInterface):
         print("---- running:", cmds)
         subprocess.run(cmds)
 
-    def run(self, launch_script: str, n: Optional[int] = None,
-            ready_status: int = STATUS_READY) -> None:
+    def run(
+        self,
+        launch_script: str,
+        n: Optional[int] = None,
+        ready_status: int = STATUS_READY,
+    ) -> None:
         for opts in self.fetch(n, status=ready_status):
             self.dispatch(opts, launch_script)
 
 
 # --- CLI functions ---
+
 
 def setup(csv_path, model_path, data_path):
     opts = INTERCHANGE_DEFAULT_OPTS.copy()
@@ -128,8 +153,9 @@ def setup(csv_path, model_path, data_path):
 
 def add(csv_path, model_type, model_path, res_dir, num_inputs, loc_mapping_type):
     import torch
-    from modeling.utils import load_model
+
     from modeling import get_module_class_by_name
+    from modeling.utils import load_model
 
     model_class = get_module_class_by_name(model_type)
     manager = CSVExperimentManager(csv_path)
@@ -162,7 +188,9 @@ def add(csv_path, model_type, model_path, res_dir, num_inputs, loc_mapping_type)
                     insert_dict["loc_mapping_type"] = loc_mapping_type
                 row_id = manager.insert(insert_dict)
                 res_save_dir = os.path.join(res_dir, f"expt-{row_id}-{time_str}")
-                manager.update({"model_path": model_path, "res_save_dir": res_save_dir}, row_id)
+                manager.update(
+                    {"model_path": model_path, "res_save_dir": res_save_dir}, row_id
+                )
 
 
 def run(csv_path, script, n, ready_status):
@@ -177,8 +205,9 @@ def add_graph(csv_path, ids, alpha, all_rows):
     manager = CSVExperimentManager(csv_path)
     if all_rows:
         for row in manager.query(status=STATUS_INTERCHANGE_DONE):
-            manager.update({"graph_alpha": alpha, "status": STATUS_GRAPH_READY},
-                           int(row["id"]))
+            manager.update(
+                {"graph_alpha": alpha, "status": STATUS_GRAPH_READY}, int(row["id"])
+            )
     elif ids:
         for row_id in ids:
             manager.update({"graph_alpha": alpha, "status": STATUS_GRAPH_READY}, row_id)
@@ -195,8 +224,9 @@ def analyze_graph(csv_path, script, n, ready_status):
 def query(csv_path, id=None, status=None, abstraction=None, limit=None):
     manager = CSVExperimentManager(csv_path)
     cols = ["id", "res_save_dir", "abstraction", "num_inputs", "status"]
-    rows = manager.query(cols=cols, status=status, abstraction=abstraction,
-                         id=id, limit=limit)
+    rows = manager.query(
+        cols=cols, status=status, abstraction=abstraction, id=id, limit=limit
+    )
     if not rows:
         print("No data found")
         return

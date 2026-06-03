@@ -35,38 +35,6 @@ run_arithmetic.py   arithmetic dataset smoke test
 
 **3-bit outcome encoding** — each (base, interv) pair produces a result `N` in 0–7:
 
-- bit 2: `high_effect_eq` — high-level model output changed
-- bit 1: `base_eq` — low base output == high base output
-- bit 0: `interv_eq` — low interv output == high interv output
-
-stored as `res_0_count` … `res_7_count` in the job queue.
-
-**clique analysis** — builds a graph over input examples where an edge means the two examples are mutually interchangeable at a given mapping. max clique size = largest subset the mapping consistently works on.
-
-## tasks
-
-### arithmetic
-
-simple arithmetic expressions: `[CLS] x op y [SEP]` where `x, y ∈ 0–9`, `op ∈ {+, -}`. label is `positive / negative / zero`. 200 total examples, 70/15/15 train/dev/test split.
-
-### MQNLI
-
-monotonicity reasoning NLI task. BERT model with 14 high-level nodes (`sentence_q`, `subj`, `neg`, `vp`, etc.) tested against BERT layers.
-
-## job queue (interchange_manager.py)
-
-CSV-backed experiment queue. each row is one job with fields from `INTERCHANGE_DEFAULT_OPTS` plus results written back on completion.
-
-**status values:**
-
-| value | meaning                   |
-| ----- | ------------------------- |
-| 0     | ready                     |
-| 1     | running                   |
-| 2     | interchange done          |
-| 3     | queued for graph analysis |
-| 4     | graph analysis done       |
-
 **subcommands:**
 
 ```bash
@@ -109,4 +77,4 @@ return dict must include: `save_path`, `res_0_count`…`res_7_count`, `max_cliqu
 python main.py arithmetic   # generates data + loads dataset, prints split sizes + sample
 ```
 
-# Notes
+> > > > > > > remotes/origin/bert-model
