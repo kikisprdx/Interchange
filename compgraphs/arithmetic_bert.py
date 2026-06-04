@@ -81,10 +81,9 @@ class Arithmetic_Bert_CompGraph(ComputationGraph):
         bert = self.model.bert
         input_ids, _, attention_mask = input_tuple[:3]
         input_shape = input_ids.shape
-        device = input_ids.device
 
         extended_attention_mask = bert.get_extended_attention_mask(
-            attention_mask, input_shape, device
+            attention_mask, input_shape
         )
 
         return {
@@ -115,15 +114,12 @@ class Arithmetic_Bert_CompGraph(ComputationGraph):
             head_mask = metainfo.get("head_mask")
             layer_head_mask = head_mask[layer_idx] if head_mask is not None else None
 
-            layer_outputs = layer_module(
+            return layer_module(
                 hidden_states,
                 attention_mask=metainfo.get("attention_mask"),
-                head_mask=layer_head_mask,
                 encoder_hidden_states=metainfo.get("encoder_hidden_states"),
                 encoder_attention_mask=metainfo.get("encoder_extended_attention_mask"),
-                output_attentions=metainfo.get("output_attentions"),
             )
-            return layer_outputs[0]
 
         return _bert_layer_forward
 

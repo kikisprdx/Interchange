@@ -33,7 +33,7 @@ def evaluate(model, dataset, device, loss_fxn):
             input_ids = batch[0].to(device)
             token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
-            labels = batch[3].to(device)
+            labels = batch[4].to(device)
             logits, _ = model(input_ids, attention_mask, token_type_ids)
             total_loss += loss_fxn(logits, labels).item()
             correct += (logits.argmax(dim=1) == labels).sum().item()
@@ -100,7 +100,7 @@ def main():
             input_ids = batch[0].to(device)
             token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
-            labels = batch[3].to(device)
+            labels = batch[4].to(device)
 
             optimizer.zero_grad()
             logits, _ = model(input_ids, attention_mask, token_type_ids)

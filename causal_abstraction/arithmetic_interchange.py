@@ -34,7 +34,7 @@ def location_to_str(loc: Any) -> str:
         parts = []
         for x in loc:
             if isinstance(x, slice):
-                parts.append(Location.slice_to_str(x))
+                parts.append(Location._slice_to_str(x))
             else:
                 parts.append(str(x))
         return "[" + ",".join(parts) + "]"
@@ -242,7 +242,7 @@ class ArithmeticInterchangeRunner:
 
             # High-level graph receives only [x, op_id, y].
             high_keys = [serialize(x) for x in raw_inputs]
-            high_graph_input = intervention.GraphInput.batched(
+            high_graph_input = intervention.GraphInput.make_batched(
                 {"input": raw_inputs}, high_keys, batch_dim=0
             )
             high_output = self.high_model.compute(high_graph_input)
@@ -250,7 +250,7 @@ class ArithmeticInterchangeRunner:
 
             low_input_for_graph = [x.to(self.device) for x in input_tuple]
             low_keys = [serialize(x) for x in input_tuple[0]]
-            low_graph_input = intervention.GraphInput.batched(
+            low_graph_input = intervention.GraphInput.make_batched(
                 {"input": low_input_for_graph}, low_keys, batch_dim=0
             )
             low_output = self.low_model.compute(low_graph_input)
@@ -294,13 +294,13 @@ class ArithmeticInterchangeRunner:
             high_interv_value = cache.high_hidden_batch(source_idx)
 
             high_base_key = [serialize(x) for x in high_base_raw]
-            high_base = intervention.GraphInput.batched(
+            high_base = intervention.GraphInput.make_batched(
                 {"input": high_base_raw}, high_base_key, cache_results=False, batch_dim=0
             )
             high_interv_key = [
                 (serialize(x), serialize(v)) for x, v in zip(high_base_raw, high_interv_value)
             ]
-            high_intervention = intervention.Intervention.batched(
+            high_intervention = intervention.Intervention.make_batched(
                 high_base,
                 high_interv_key,
                 intervention={mapping.high_node: high_interv_value},
@@ -315,14 +315,14 @@ class ArithmeticInterchangeRunner:
             low_interv_value = cache.low_hidden_batch(source_idx, self.device)
 
             low_base_key = [serialize(x) for x in low_base_tuple[0].detach().cpu()]
-            low_base = intervention.GraphInput.batched(
+            low_base = intervention.GraphInput.make_batched(
                 {"input": low_base_tuple}, low_base_key, cache_results=False, batch_dim=0
             )
             low_interv_key = [
                 (serialize(x.detach().cpu()), serialize(v.detach().cpu()))
                 for x, v in zip(low_base_tuple[0], low_interv_value)
             ]
-            low_intervention = intervention.Intervention.batched(
+            low_intervention = intervention.Intervention.make_batched(
                 low_base,
                 low_interv_key,
                 intervention={mapping.low_node: low_interv_value},

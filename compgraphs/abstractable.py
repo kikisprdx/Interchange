@@ -125,8 +125,8 @@ class AbstractableCompGraph(ComputationGraph):
 
     def _generate_input_node(self, name: str) -> GraphNode:
         """Helper to create a leaf input node."""
-        def _input_forward_fxn(x):
-            return x
+        def _input_forward_fxn(*args):
+            return list(args) if len(args) > 1 else args[0]
         return GraphNode(name=name, forward=_input_forward_fxn, cache_results=False)
 
     def generate_forward_function(self, abstracted_node: str, children: List[str]) -> Callable:

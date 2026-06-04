@@ -88,8 +88,7 @@ def load_finetuned_bert_model(model_path: str, device: torch.device) -> torch.nn
         model = obj["module"]
     else:
         model = ArithmeticBertModule(num_labels=3)
-        state_dict = obj if isinstance(obj, dict) else obj
-        model.load_state_dict(state_dict)
+        model.load_state_dict(obj)
         model = model.to(device)
 
     if hasattr(model, "module") and isinstance(model.module, torch.nn.Module):

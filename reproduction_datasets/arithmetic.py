@@ -43,9 +43,12 @@ class ArithmeticData:
         self.dev   = ArithmeticDataset(lines[n_train:n_train + n_dev], self.tokenizer)
         self.test  = ArithmeticDataset(lines[n_train + n_dev:], self.tokenizer)
 
+OP_ID = {'+': 0, '-': 1}
+
 class ArithmeticDataset(Dataset):
     def __init__(self, lines, tokenizer):
         self.raw_x = []
+        self.raw_arith = []
         self.raw_y = []
         for line in lines:
             expr, _, outcome = line.split(", ")
@@ -53,6 +56,7 @@ class ArithmeticDataset(Dataset):
             toks = ["[CLS]", x, op, y, "[SEP]"]
             ids = tokenizer.convert_tokens_to_ids(toks)
             self.raw_x.append(ids)
+            self.raw_arith.append([int(x), OP_ID[op], int(y)])
             self.raw_y.append(label_dict[outcome])
         self.num_examples = len(self.raw_x)
 
@@ -63,6 +67,7 @@ class ArithmeticDataset(Dataset):
         return (torch.tensor(self.raw_x[i], dtype=torch.long),
                 torch.tensor([0] * SEQ_LEN, dtype=torch.long),
                 torch.tensor([1.] * SEQ_LEN, dtype=torch.float),
+                torch.tensor(self.raw_arith[i], dtype=torch.long),
                 self.raw_y[i])
 
 
