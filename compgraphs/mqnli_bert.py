@@ -24,7 +24,7 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
         :param bert_model: The BERT model instance (must be configured for MQNLI).
         :param root_output_device: Optional device for the root output.
         """
-        if bert_model.task != "mqnli":
+        if hasattr(bert_model, "task") and bert_model.task != "mqnli":
             raise ValueError("The model must be for MQNLI!")
 
         self.model = bert_model
