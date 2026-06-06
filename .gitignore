@@ -17,24 +17,18 @@ intervention/forward_tree_dump.txt
 .env
 .claude
 *.ju.py
-<<<<<<< HEAD
 poetry.lock
-=======
->>>>>>> remotes/origin/bert-model
 /data/*
 !/data/tokenization
 /env
 *.ju.py
 experiment/
-interchange_analysis.md
-interchange_analysis.ipynb
+
+.ipynb
 *.csv
-<<<<<<< HEAD
 poetry.lock
 *.pt 
 *.pth
-=======
 checkpoints/
 checkpoints/
 pipeline/
->>>>>>> remotes/origin/bert-model
