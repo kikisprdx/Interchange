@@ -271,3 +271,15 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# Example usage small (just test
+# python mqnli_interchange.py \
+#   --data_path data/mqnli_preprocessed.pt \
+#   --model_path checkpoints/bert_mqnli_finetuned.pt \
+#   --output_csv results/mqnli_obj_layer4_test.csv \
+#   --high_nodes obj \
+#   --layers 4 \
+#   --num_inputs 10
+
+# num inputs should be larger for final test

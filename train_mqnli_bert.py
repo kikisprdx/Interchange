@@ -69,6 +69,11 @@ def main():
     scheduler = get_linear_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
     best_dev_acc = 0.0
+
+    #TEMP
+    # torch.save(model.state_dict(), "checkpoints/bert_mqnli_pretrained.pt")
+    # print("SAVED")
+
     for epoch in range(EPOCHS):
         model.train()
         total_loss = total = 0

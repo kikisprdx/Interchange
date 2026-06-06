@@ -64,29 +64,79 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
             node_root, root_output_device=root_output_device
         )
 
+    # @property
+    # def device(self) -> torch.device:
+    #     """Get the device the model is on."""
+    #     return self.model.device
+
+    # TEST
     @property
     def device(self) -> torch.device:
         """Get the device the model is on."""
-        return self.model.device
+        return next(self.model.parameters()).device
 
     def _input_forward(self, x: Any) -> Any:
         """Identity forward function for the input node."""
         return x
+    #
+    # def _metainfo_forward(self, input_tuple: tuple) -> Dict[str, Any]:
+    #     """Generate extended attention masks and other metadata."""
+    #     bert = self.model.bert
+    #     input_ids, _, attention_mask = input_tuple[:3]
+    #     input_shape = input_ids.shape
+    #     device = input_ids.device
+    #
+    #     extended_attention_mask = bert.get_extended_attention_mask(
+    #         attention_mask, input_shape, device
+    #     )
+    #
+    #     return {
+    #         "attention_mask": extended_attention_mask,
+    #         "head_mask": [None] * 12,
+    #         "encoder_hidden_states": None,
+    #         "encoder_extended_attention_mask": None,
+    #         "output_attentions": False,
+    #         "output_hidden_states": False,
+    #         "return_dict": False,
+    #     }
 
     def _metainfo_forward(self, input_tuple: tuple) -> Dict[str, Any]:
-        """Generate extended attention masks and other metadata."""
-        bert = self.model.bert
-        input_ids, _, attention_mask = input_tuple[:3]
-        input_shape = input_ids.shape
-        device = input_ids.device
+        """
+        Generate BERT attention metadata.
 
-        extended_attention_mask = bert.get_extended_attention_mask(
-            attention_mask, input_shape, device
-        )
+        We create the extended attention mask manually instead of calling
+        bert.get_extended_attention_mask(...), because the signature of that
+        HuggingFace helper changed across transformers versions.
+        """
+        bert = self.model.bert
+
+        input_ids, _, attention_mask = input_tuple[:3]
+        device = input_ids.device
+        dtype = next(self.model.parameters()).dtype
+
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids, device=device)
+
+        attention_mask = attention_mask.to(device=device)
+
+        # BERT expects attention mask shape:
+        # [batch_size, 1, 1, seq_len]
+        extended_attention_mask = attention_mask[:, None, None, :].to(dtype=dtype)
+
+        # Convert:
+        # 1 = attend
+        # 0 = mask out
+        #
+        # into:
+        # 0.0      for tokens to attend to
+        # -10000.0 for masked tokens
+        extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
+
+        num_layers = len(bert.encoder.layer)
 
         return {
             "attention_mask": extended_attention_mask,
-            "head_mask": [None] * 12,
+            "head_mask": [None] * num_layers,
             "encoder_hidden_states": None,
             "encoder_extended_attention_mask": None,
             "output_attentions": False,
@@ -101,23 +151,53 @@ class MQNLI_Bert_CompGraph(ComputationGraph):
             input_ids=input_ids, token_type_ids=token_type_ids
         )
 
+    # def _generate_bert_layer_forward(
+    #     self, layer_module: torch.nn.Module, layer_idx: int
+    # ) -> Callable:
+    #     """Generate the forward function for a specific BERT layer."""
+    #
+    #     def _bert_layer_forward(
+    #         hidden_states: torch.Tensor, metainfo: Dict[str, Any]
+    #     ) -> torch.Tensor:
+    #         head_mask = metainfo.get("head_mask")
+    #         layer_head_mask = head_mask[layer_idx] if head_mask is not None else None
+    #
+    #         return layer_module(
+    #             hidden_states,
+    #             attention_mask=metainfo.get("attention_mask"),
+    #             encoder_hidden_states=metainfo.get("encoder_hidden_states"),
+    #             encoder_attention_mask=metainfo.get("encoder_extended_attention_mask"),
+    #         )
+    #
+    #     return _bert_layer_forward
+
     def _generate_bert_layer_forward(
-        self, layer_module: torch.nn.Module, layer_idx: int
+            self, layer_module: torch.nn.Module, layer_idx: int
     ) -> Callable:
         """Generate the forward function for a specific BERT layer."""
 
         def _bert_layer_forward(
-            hidden_states: torch.Tensor, metainfo: Dict[str, Any]
+                hidden_states: torch.Tensor, metainfo: Dict[str, Any]
         ) -> torch.Tensor:
             head_mask = metainfo.get("head_mask")
             layer_head_mask = head_mask[layer_idx] if head_mask is not None else None
 
-            return layer_module(
+            outputs = layer_module(
                 hidden_states,
                 attention_mask=metainfo.get("attention_mask"),
+                head_mask=layer_head_mask,
                 encoder_hidden_states=metainfo.get("encoder_hidden_states"),
                 encoder_attention_mask=metainfo.get("encoder_extended_attention_mask"),
+                output_attentions=False,
             )
+
+            # HuggingFace BertLayer returns a tuple:
+            # (hidden_states, attention_outputs, ...)
+            # The next layer only needs hidden_states.
+            if isinstance(outputs, (tuple, list)):
+                return outputs[0]
+
+            return outputs
 
         return _bert_layer_forward
 
