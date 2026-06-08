@@ -8,6 +8,10 @@ sys.path.insert(1, os.path.join("vendor", "interchange"))
 import torch
 from transformers import BertTokenizer
 
+from arithmetic_interchange_manager import main as run_arithmetic_interchange
+from mqnli_interchange_manager import main as run_mqnli_interchange
+from train_arithmetic_bert import main as train_arithmetic
+from train_mqnli_bert import main as train_mqnli
 from reproduction_datasets.arithmetic import ArithmeticData, generate_data
 from datasets.mqnli import MQNLIBertData
 
@@ -29,7 +33,7 @@ def main():
     train_p.add_argument("task", choices=["arithmetic", "mqnli"])
 
     interchange_p = sub.add_parser("interchange")
-    interchange_p.add_argument("task", choices=["arithmetic"])
+    interchange_p.add_argument("task", choices=["arithmetic", "mqnli"])
     interchange_p.add_argument("rest", nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
@@ -68,21 +72,16 @@ def main():
 
     elif args.cmd == "train":
         if args.task == "arithmetic":
-            from train_arithmetic_bert import main as train
-
-            train()
-
+            train_arithmetic()
         elif args.task == "mqnli":
-            from train_mqnli_bert import main as train
-
-            train()
+            train_mqnli()
 
     elif args.cmd == "interchange":
+        sys.argv = [sys.argv[0]] + args.rest
         if args.task == "arithmetic":
-            sys.argv = [sys.argv[0]] + args.rest
-            from arithmetic_interchange_manager import main as run_interchange
-
-            run_interchange()
+            run_arithmetic_interchange()
+        elif args.task == "mqnli":
+            run_mqnli_interchange()
 
 
 if __name__ == "__main__":
