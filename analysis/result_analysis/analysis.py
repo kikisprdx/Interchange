@@ -1,0 +1,184 @@
+# functions for analysis of the results of the intervention experiments
+
+import os
+import glob
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import networkx as nx
+
+
+def load_experiment_data(base_dir):
+    all_files = glob.glob(os.path.join(base_dir, "**", "*.csv"), recursive=True)
+    df_list = []
+    
+    for file in all_files:
+        try:
+            df = pd.read_csv(file)
+            df_list.append(df)
+        except Exception as e:
+            print(f"Could not read {file}: {e}")
+            
+    if not df_list:
+        raise ValueError("No CSV files found!!!!!!!!!")
+        
+    combined_df = pd.concat(df_list, ignore_index=True)
+    print(f"Loaded {len(combined_df)} total intervention experiments.")
+    return combined_df
+
+def plot_general_accuracy(df):
+    # drop duplicate base examples so  don't overcount
+    unique_bases = df.drop_duplicates(subset=['base_i', 'high_node'])
+    
+    # clculate accuracy per high_node
+    accuracy = unique_bases.groupby('high_node')['base_correct_vs_high'].mean()
+    accuracy.to_csv('general_accuracy.csv', header=['accuracy'])
+    
+    fig, ax = plt.subplots(figsize=(8, 5))
+    accuracy.plot(kind='bar', ax=ax, color='#5dade2')
+    
+    ax.set_title("General Model Accuracy per Abstract Variable")
+    ax.set_ylabel("Accuracy")
+    ax.set_ylim(0, 1.05)
+    
+    for p in ax.patches:
+        ax.annotate(f"{p.get_height():.1%}", 
+                    (p.get_x() + p.get_width() / 2., p.get_height()), 
+                    ha='center', va='bottom', xytext=(0, 5), 
+                    textcoords='offset points')
+        
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def plot_intervention_success_rate(df):
+    # filter -> base model was correct n the intervention is impactful (should change output)
+    mask = (df['base_correct_vs_high'] == 1) & (df['high_changed'] == 1)
+    valid_interventions = df[mask]
+    
+    # calculate success rate grouped by abstract variable and layer
+    success_rates = valid_interventions.groupby(['high_node', 'low_node'])['interchange_success'].mean().unstack()
+    
+    # sort columns to ensure layers are in order (so : bert_layer_0, bert_layer_1...)
+    sorted_columns = sorted(success_rates.columns, key=lambda x: int(x.split('_')[-1]))
+    success_rates = success_rates[sorted_columns]
+    success_rates.to_csv('intervention_success_rates.csv')
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    for high_node in success_rates.index:
+        ax.plot(success_rates.columns, success_rates.loc[high_node], marker='o', label=high_node)
+        
+    ax.set_title("Intervention Success Rate by Layer")
+    ax.set_ylabel("Success Rate")
+    ax.set_xlabel("Neural Model Layer")
+    ax.set_ylim(-0.05, 1.05)
+    ax.legend(title="Abstract Variable")
+    
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def calculate_clique_sizes(df):
+    # correct base predictions
+    correct_df = df[df['base_correct_vs_high'] == 1]
+    
+    clique_records = []
+    
+    # total n of unique inputs (needed to calculate percentage)
+    total_examples = df['base_i'].nunique()
+    
+    groups = correct_df.groupby(['high_node', 'low_node'])
+    
+    for (high_node, low_node), group in groups:
+        # get edges where intervention was successful
+        successful_edges = group[group['interchange_success'] == 1]
+        
+        # build directed graph
+        G = nx.DiGraph()
+        edges = list(zip(successful_edges['base_i'], successful_edges['source_i']))
+        G.add_edges_from(edges)
+        
+        # the paper seems to require both (e_i, e_j) and (e_j, e_i) to be successful to form an edge (???)
+        G_undirected = nx.Graph()
+        for u, v in G.edges():
+            if G.has_edge(v, u):
+                G_undirected.add_edge(u, v)
+                
+        # find all cliques
+        cliques = list(nx.find_cliques(G_undirected))
+        
+        if cliques:
+            max_clique_size = max(len(c) for c in cliques)
+        else:
+            max_clique_size = 0
+            
+        clique_records.append({
+            'high_node': high_node,
+            'low_node': low_node,
+            'max_clique_size': max_clique_size,
+            'clique_percentage': max_clique_size / total_examples
+        })
+        
+    return pd.DataFrame(clique_records)
+
+def plot_clique_sizes(df):
+    clique_df = calculate_clique_sizes(df)
+    
+    clique_pivot = clique_df.pivot(index='high_node', columns='low_node', values='clique_percentage')
+    
+    # sort columns
+    sorted_columns = sorted(clique_pivot.columns, key=lambda x: int(x.split('_')[-1]))
+    clique_pivot = clique_pivot[sorted_columns]
+    clique_pivot.to_csv('clique_sizes_pivoted.csv')
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    for high_node in clique_pivot.index:
+        ax.plot(clique_pivot.columns, clique_pivot.loc[high_node], marker='s', linestyle='--', label=high_node)
+        
+    ax.set_title("Maximum Clique Size by Layer")
+    ax.set_ylabel("Clique Size (% of total examples)")
+    ax.set_xlabel("Neural Model Layer")
+    ax.legend(title="Abstract Variable")
+    
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def plot_outcome_breakdown(df):
+    # pick one layer to visualize as an example (e.g., Layer 9 for the 'sign' variable)
+    layer_df = df[(df['low_node'] == 'bert_layer_9') & (df['high_node'] == 'sign')].copy()
+    
+    # categorise every row into one of the 5 categories used in the paper's notebook
+    def categorize(row):
+        if row['base_correct_vs_high'] == 0:
+            return "Base Incorrect"
+        if row['high_changed'] == 1 and row['interchange_success'] == 1:
+            return "Causal, Successful"
+        if row['high_changed'] == 1 and row['interchange_success'] == 0:
+            return "Causal, Failed"
+        if row['high_changed'] == 0 and row['interchange_success'] == 1:
+            return "Non-Causal, Successful"
+        if row['high_changed'] == 0 and row['interchange_success'] == 0:
+            return "Non-Causal, Failed"
+            
+    layer_df['category'] = layer_df.apply(categorize, axis=1)
+    
+    # count the outcomes
+    counts = layer_df['category'].value_counts(normalize=True)
+    
+    fig, ax = plt.subplots(figsize=(8, 5))
+    counts.plot(kind='bar', color=['red', 'green', 'blue', 'yellow', 'gray'], ax=ax)
+    
+    ax.set_title("Full Breakdown of Intervention Outcomes (Layer 9, Sign Variable)")
+    ax.set_ylabel("Proportion of Total Examples")
+    
+    for p in ax.patches:
+        ax.annotate(f"{p.get_height():.1%}", 
+                    (p.get_x() + p.get_width() / 2., p.get_height()), 
+                    ha='center', va='bottom', xytext=(0, 5), textcoords='offset points')
+                    
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
