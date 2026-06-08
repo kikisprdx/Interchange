@@ -26,13 +26,13 @@ def load_experiment_data(base_dir):
     print(f"Loaded {len(combined_df)} total intervention experiments.")
     return combined_df
 
-def plot_general_accuracy(df):
+def plot_general_accuracy(df, dataset_name):
     # drop duplicate base examples so  don't overcount
     unique_bases = df.drop_duplicates(subset=['base_i', 'high_node'])
     
     # clculate accuracy per high_node
     accuracy = unique_bases.groupby('high_node')['base_correct_vs_high'].mean()
-    accuracy.to_csv('general_accuracy.csv', header=['accuracy'])
+    accuracy.to_csv(f'general_accuracy_{dataset_name}.csv', header=['accuracy'])
     
     fig, ax = plt.subplots(figsize=(8, 5))
     accuracy.plot(kind='bar', ax=ax, color='#5dade2')
@@ -51,7 +51,7 @@ def plot_general_accuracy(df):
     plt.tight_layout()
     plt.show()
 
-def plot_intervention_success_rate(df):
+def plot_intervention_success_rate(df, dataset_name):
     # filter -> base model was correct n the intervention is impactful (should change output)
     mask = (df['base_correct_vs_high'] == 1) & (df['high_changed'] == 1)
     valid_interventions = df[mask]
@@ -62,7 +62,7 @@ def plot_intervention_success_rate(df):
     # sort columns to ensure layers are in order (so : bert_layer_0, bert_layer_1...)
     sorted_columns = sorted(success_rates.columns, key=lambda x: int(x.split('_')[-1]))
     success_rates = success_rates[sorted_columns]
-    success_rates.to_csv('intervention_success_rates.csv')
+    success_rates.to_csv(f'intervention_success_rates_{dataset_name}.csv')
 
     fig, ax = plt.subplots(figsize=(10, 6))
     
@@ -122,7 +122,7 @@ def calculate_clique_sizes(df):
         
     return pd.DataFrame(clique_records)
 
-def plot_clique_sizes(df):
+def plot_clique_sizes(df, dataset_name):
     clique_df = calculate_clique_sizes(df)
     
     clique_pivot = clique_df.pivot(index='high_node', columns='low_node', values='clique_percentage')
@@ -130,7 +130,7 @@ def plot_clique_sizes(df):
     # sort columns
     sorted_columns = sorted(clique_pivot.columns, key=lambda x: int(x.split('_')[-1]))
     clique_pivot = clique_pivot[sorted_columns]
-    clique_pivot.to_csv('clique_sizes_pivoted.csv')
+    clique_pivot.to_csv(f'clique_sizes_pivoted_{dataset_name}.csv')
     
     fig, ax = plt.subplots(figsize=(10, 6))
     
@@ -140,13 +140,14 @@ def plot_clique_sizes(df):
     ax.set_title("Maximum Clique Size by Layer")
     ax.set_ylabel("Clique Size (% of total examples)")
     ax.set_xlabel("Neural Model Layer")
-    ax.legend(title="Abstract Variable")
+    # change location to outside of plot
+    ax.legend(title="Abstract Variable", loc='uppper left', bbox_to_anchor=(1.3, 1))
     
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
 
-def plot_outcome_breakdown(df):
+def plot_outcome_breakdown(df, dataset_name):
     # pick one layer to visualize as an example (e.g., Layer 9 for the 'sign' variable)
     layer_df = df[(df['low_node'] == 'bert_layer_9') & (df['high_node'] == 'sign')].copy()
     
