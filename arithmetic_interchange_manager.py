@@ -180,7 +180,7 @@ def main():
     p.add_argument("-d", "--csv_path", required=True)
     p.add_argument("-m", "--model_path", required=True)
     p.add_argument("-i", "--data_path", required=True)
-    p.add_argument("-o", "--res_dir", required=True)
+    p.add_argument("-o", "--res_dir", default="results/arithmetic")
     p.add_argument("--layers", type=int, nargs="*", default=list(range(11)))
     p.add_argument("--high_nodes", nargs="*", default=HIGH_NODES)
     p.add_argument("--num_inputs", type=int, default=100)

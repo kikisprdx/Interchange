@@ -125,7 +125,8 @@ def load_mqnli_bert_model(model_path: str, data: Any, dataset: Any, device: torc
 
     state_dict = clean_state_dict_keys(state_dict)
     vocab_size = infer_vocab_size(data, dataset, state_dict)
-    model = ArithmeticBertModule(num_labels=3)
+    num_labels = state_dict["logits.weight"].shape[0]
+    model = ArithmeticBertModule(num_labels=num_labels)
     model.bert.resize_token_embeddings(vocab_size)
     missing, unexpected = model.load_state_dict(state_dict, strict=False)
     if missing:

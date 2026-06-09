@@ -64,6 +64,13 @@ def main():
                 check=True,
             )
             print(f"generated mqnli data → {save_dir}")
+            subprocess.run(
+                ["python", "make_subphrase_labels.py", save_dir,
+                 os.path.join(os.path.abspath(VENDOR_MQNLI), "data")],
+                cwd=os.path.abspath(VENDOR_MQNLI),
+                check=True,
+            )
+            print(f"generated subphrase labels → {save_dir}/0gendata.train.subphrase")
             train_f = os.path.join(MQNLI_DATA_DIR, "0gendata.train")
             dev_f   = os.path.join(MQNLI_DATA_DIR, "0gendata.val")
             test_f  = os.path.join(MQNLI_DATA_DIR, "0gendata.test")
