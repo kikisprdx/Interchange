@@ -12,6 +12,7 @@ dependencies = [
     "transformers>=4.30.0",
     "tqdm",
     "seaborn",
+    "ipykernel (>=7.2.0,<8.0.0)",
 ]
 
 [build-system]
