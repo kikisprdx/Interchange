@@ -6,6 +6,27 @@ This repo reproduces the original MQNLI experiments and extends the method to a 
 
 MQNLI reproduction reached 74% accuracy (vs. 88.5% in the original), yielding only shallow syntactic structures. Arithmetic on the other hand reached 99% accuracy but the three-class head collapsed the result and sign into identical interchange targets, making their separation ambigious.
 
+## Project structure
+
+```
+main.py                      # CLI entry point (generate / train / interchange)
+training/                    # Fine-tuning scripts for arithmetic and MQNLI BERT
+reproduction_datasets/       # Arithmetic dataset generation and DataLoader
+datasets/                    # MQNLI dataset and BERT collation utilities
+modeling/                    # ArithmeticBertModule (shared by both tasks)
+compgraphs/                  # High-level causal graphs (SCMs) for alignment
+pipeline/                    # Interchange intervention engine
+causal_abstraction/          # Experiment logic: runs interventions, computes success rates
+managers/                    # CSVExperimentManager — orchestrates workers via experiment CSV
+workers/                     # Per-experiment subprocess entry points
+analysis/                    # Post-hoc result analysis and plotting
+vendor/interchange/          # Geiger et al. original repo (git submodule)
+data/                        # Generated datasets and preprocessed .pt files (gitignored)
+checkpoints/                 # Saved model weights (gitignored)
+results/                     # Experiment CSVs and plots
+tests/                       # Pytest suite
+```
+
 ## Setup
 
 ```bash
