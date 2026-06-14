@@ -21,8 +21,8 @@ managers/                    # CSVExperimentManager — orchestrates workers via
 workers/                     # Per-experiment subprocess entry points
 analysis/                    # Post-hoc result analysis and plotting
 vendor/interchange/          # Geiger et al. original repo (git submodule)
-data/                        # Generated datasets and preprocessed .pt files (gitignored)
-checkpoints/                 # Saved model weights (gitignored)
+data/                        # Generated datasets and preprocessed .pt files (created under code run)
+checkpoints/                 # Saved model weights (created under code run)
 results/                     # Experiment CSVs and plots
 tests/                       # Pytest suite
 ```
