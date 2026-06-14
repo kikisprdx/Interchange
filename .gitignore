@@ -22,18 +22,12 @@ poetry.lock
 !/data/tokenization
 /env
 experiment/
-
 .ipynb
 *.csv
-<<<<<<< HEAD
 *.pt
 *.pth
 *.zip
-=======
 poetry.lock
 *.pt 
 *.pth
 checkpoints/
->>>>>>> remotes/origin/analysis
-checkpoints/
-pipeline/

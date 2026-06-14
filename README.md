@@ -1,24 +1,51 @@
-**subcommands:**
+# Interchange
+
+Reproduction of Geiger et al. (2021) causal abstraction / interchange intervention on BERT, extended to an arithmetic dataset.
+
+## Setup
 
 ```bash
-# initialise a new queue
-python interchange_manager.py setup -d experiments.csv -m model.pt -i data/
-
-# populate with jobs (iterates high nodes × layers × num_inputs)
-python interchange_manager.py add -d experiments.csv -t bert -m model.pt -o results/ -n 500
-
-# run interchange experiments (dispatches worker scripts)
-python interchange_manager.py run -d experiments.csv -i python interchange.py
-
-# mark completed interchange jobs as ready for graph analysis
-python interchange_manager.py add_graph -d experiments.csv -a 100 --all_rows
-
-# run graph/clique analysis
-python interchange_manager.py analyze_graph -d experiments.csv -i python graph_analysis.py
-
-# query queue state
-python interchange_manager.py query -d experiments.csv -s 0
-
-# manually update status
-python interchange_manager.py update_status -d experiments.csv -i 3 4 5 -s 0
+poetry install
 ```
+
+Requires Python 3.12.
+
+## Usage
+
+**1. Generate arithmetic data**
+```bash
+python main.py generate arithmetic
+```
+
+**2. Generate MQNLI data**
+```bash
+python main.py generate mqnli
+```
+
+**3. Train arithmetic BERT**
+```bash
+python main.py train arithmetic
+```
+Saves to `checkpoints/bert_arithmetic_finetuned.pt`.
+
+**4. Train MQNLI BERT**
+```bash
+python main.py train mqnli
+```
+Saves to `checkpoints/bert_mqnli_finetuned.pt`.
+
+**5. Run arithmetic interchange**
+```bash
+python main.py interchange arithmetic setup -d results/experiments.csv -m checkpoints/bert_arithmetic_finetuned.pt -i data/arithmetic_preprocessed.pt
+python main.py interchange arithmetic add -d results/experiments.csv -m checkpoints/bert_arithmetic_finetuned.pt -i data/arithmetic_preprocessed.pt
+python main.py interchange arithmetic run -d results/experiments.csv
+```
+
+**6. Run MQNLI interchange**
+```bash
+python main.py interchange mqnli setup -d results/experiments_mqnli.csv -m checkpoints/bert_mqnli_finetuned.pt -i data/mqnli_preprocessed.pt
+python main.py interchange mqnli add -d results/experiments_mqnli.csv -m checkpoints/bert_mqnli_finetuned.pt -i data/mqnli_preprocessed.pt
+python main.py interchange mqnli run -d results/experiments_mqnli.csv
+```
+
+Results are written to `results/`.

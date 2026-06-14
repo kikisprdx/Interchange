@@ -8,10 +8,10 @@ sys.path.insert(1, os.path.join("vendor", "interchange"))
 import torch
 from transformers import BertTokenizer
 
-from arithmetic_interchange_manager import main as run_arithmetic_interchange
-from mqnli_interchange_manager import main as run_mqnli_interchange
-from train_arithmetic_bert import main as train_arithmetic
-from train_mqnli_bert import main as train_mqnli
+from managers.arithmetic import main as run_arithmetic_interchange
+from managers.mqnli import main as run_mqnli_interchange
+from training.arithmetic_bert import main as train_arithmetic
+from training.mqnli_bert import main as train_mqnli
 from reproduction_datasets.arithmetic import ArithmeticData, generate_data
 from datasets.mqnli import MQNLIBertData
 

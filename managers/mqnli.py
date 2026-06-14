@@ -184,7 +184,7 @@ def main():
 
     p = sub.add_parser("run")
     p.add_argument("-d", "--csv_path", required=True)
-    p.add_argument("-i", "--script", default="python mqnli_interchange.py")
+    p.add_argument("-i", "--script", default="python workers/mqnli.py")
     p.add_argument("-n", type=int, default=None)
 
     p = sub.add_parser("query")
