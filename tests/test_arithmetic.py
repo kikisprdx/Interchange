@@ -1,3 +1,5 @@
+"""Pytest suite for `reproduction_datasets/arithmetic.py` — data generation and ArithmeticDataset."""
+
 import os
 import pytest
 import torch
@@ -11,6 +13,7 @@ SEP_ID = 102
 
 @pytest.fixture(scope="module")
 def csv_path(tmp_path_factory):
+    """Return a temp path for a CSV that has not yet been generated."""
     path = str(tmp_path_factory.mktemp("data") / "arithmetic.csv")
     original = os.getcwd()
     os.chdir(tmp_path_factory.mktemp("root"))
@@ -23,6 +26,7 @@ def csv_path(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def generated_csv(tmp_path_factory):
+    """Generate arithmetic.csv into a temp dir and return its path."""
     d = tmp_path_factory.mktemp("data")
     csv_file = str(d / "arithmetic.csv")
     orig_dir = os.getcwd()
@@ -36,6 +40,7 @@ def generated_csv(tmp_path_factory):
 def test_generate_data_row_count(generated_csv):
     with open(generated_csv) as f:
         rows = f.readlines()
+    # 401 numbers × 401 numbers × 2 operators
     assert len(rows) == 401 * 401 * 2
 
 
@@ -59,6 +64,7 @@ def test_generate_data_no_duplicates(generated_csv):
 
 @pytest.fixture(scope="module")
 def vocab_path(tmp_path_factory):
+    """Save a base BERT vocabulary to a temp dir and return the vocab file path."""
     from transformers import BertTokenizer
     d = str(tmp_path_factory.mktemp("vocab"))
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -67,11 +73,13 @@ def vocab_path(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def arithmetic_data(generated_csv, vocab_path):
+    """Return a fully loaded ArithmeticData instance over the generated CSV."""
     return ArithmeticData(generated_csv, vocab_path)
 
 
 def test_split_ratios(arithmetic_data):
     total = len(arithmetic_data.train) + len(arithmetic_data.dev) + len(arithmetic_data.test)
+    # ±1% tolerance
     assert abs(len(arithmetic_data.train) / total - 0.70) < 0.01
     assert abs(len(arithmetic_data.dev) / total - 0.15) < 0.01
 

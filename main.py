@@ -1,28 +1,34 @@
+"""CLI entry point — generate, train, and interchange subcommands for arithmetic and MQNLI tasks."""
+
 import argparse
 import os
 import subprocess
 import sys
 
+# Author's original REPO as a git package
 sys.path.insert(1, os.path.join("vendor", "interchange"))
 
 import torch
 from transformers import BertTokenizer
 
+from datasets.mqnli import MQNLIBertData
 from managers.arithmetic import main as run_arithmetic_interchange
 from managers.mqnli import main as run_mqnli_interchange
+from reproduction_datasets.arithmetic import ArithmeticData, generate_data
 from training.arithmetic_bert import main as train_arithmetic
 from training.mqnli_bert import main as train_mqnli
-from reproduction_datasets.arithmetic import ArithmeticData, generate_data
-from datasets.mqnli import MQNLIBertData
 
 VENDOR_MQNLI = os.path.join("vendor", "interchange", "mqnli")
 MQNLI_SIZE = 50_000
 ARITHMETIC_VOCAB_DIR = "data/arithmetic_vocab"
-MQNLI_REMAPPING = os.path.join("vendor", "interchange", "data", "tokenization", "bert-remapping.txt")
+MQNLI_REMAPPING = os.path.join(
+    "vendor", "interchange", "data", "tokenization", "bert-remapping.txt"
+)
 MQNLI_DATA_DIR = "data/mqnli"
 
 
 def main():
+    """Parse subcommand and dispatch to the appropriate generate/train/interchange handler."""
     parser = argparse.ArgumentParser(prog="interchange")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -45,13 +51,18 @@ def main():
             generate_data()
             print("generated data/arithmetic.csv")
             tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-            tokens_to_add = [str(i) for i in range(-200, 201) if str(i) not in tokenizer.vocab]
+            tokens_to_add = [
+                str(i) for i in range(-200, 201) if str(i) not in tokenizer.vocab
+            ]
             tokenizer.add_tokens(tokens_to_add)
             vocab_path = tokenizer.save_vocabulary(ARITHMETIC_VOCAB_DIR)[0]
             with open(vocab_path, "a", encoding="utf-8") as f:
                 for token in tokens_to_add:
                     f.write(token + "\n")
-            torch.save(ArithmeticData("data/arithmetic.csv", vocab_path), "data/arithmetic_preprocessed.pt")
+            torch.save(
+                ArithmeticData("data/arithmetic.csv", vocab_path),
+                "data/arithmetic_preprocessed.pt",
+            )
             print("generated data/arithmetic_preprocessed.pt")
 
         elif args.task == "mqnli":
@@ -65,16 +76,23 @@ def main():
             )
             print(f"generated mqnli data → {save_dir}")
             subprocess.run(
-                ["python", "make_subphrase_labels.py", save_dir,
-                 os.path.join(os.path.abspath(VENDOR_MQNLI), "data")],
+                [
+                    "python",
+                    "make_subphrase_labels.py",
+                    save_dir,
+                    os.path.join(os.path.abspath(VENDOR_MQNLI), "data"),
+                ],
                 cwd=os.path.abspath(VENDOR_MQNLI),
                 check=True,
             )
             print(f"generated subphrase labels → {save_dir}/0gendata.train.subphrase")
             train_f = os.path.join(MQNLI_DATA_DIR, "0gendata.train")
-            dev_f   = os.path.join(MQNLI_DATA_DIR, "0gendata.val")
-            test_f  = os.path.join(MQNLI_DATA_DIR, "0gendata.test")
-            torch.save(MQNLIBertData(train_f, dev_f, test_f, MQNLI_REMAPPING), "data/mqnli_preprocessed.pt")
+            dev_f = os.path.join(MQNLI_DATA_DIR, "0gendata.val")
+            test_f = os.path.join(MQNLI_DATA_DIR, "0gendata.test")
+            torch.save(
+                MQNLIBertData(train_f, dev_f, test_f, MQNLI_REMAPPING),
+                "data/mqnli_preprocessed.pt",
+            )
             print("generated data/mqnli_preprocessed.pt")
 
     elif args.cmd == "train":

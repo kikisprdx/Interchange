@@ -1,3 +1,5 @@
+"""Fine-tunes BERT on the MQNLI entailment task."""
+
 import os
 import sys
 import torch
@@ -24,6 +26,7 @@ LR_WARMUP_RATIO = 0.5
 
 
 def evaluate(model, dataset, device):
+    """Return (accuracy, mean_loss) on dataset."""
     loader = DataLoader(dataset, batch_size=64, shuffle=False)
     loss_fxn = nn.CrossEntropyLoss()
     correct = total = 0
@@ -34,8 +37,10 @@ def evaluate(model, dataset, device):
             input_ids      = batch[0].to(device)
             token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
+            # MQNLIBertData returns labels as int, not tensor
             labels = batch[4].to(device) if isinstance(batch[4], torch.Tensor) else torch.tensor(batch[4]).to(device)
             logits, _ = model(input_ids, attention_mask, token_type_ids)
+            # Model outputs 10 logits; only the first 3 correspond to entailment labels
             total_loss += loss_fxn(logits[:, :3], labels).item()
             correct += (logits[:, :3].argmax(dim=1) == labels).sum().item()
             total += labels.size(0)
@@ -43,6 +48,7 @@ def evaluate(model, dataset, device):
 
 
 def main():
+    """Load MQNLI data, train with subphrase weighting, and save the best checkpoint."""
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     print(f"using device: {device}")
 
@@ -63,6 +69,7 @@ def main():
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
     train_loader = DataLoader(data.train, batch_size=BATCH_SIZE, shuffle=True, collate_fn=bert_subphrase_collate)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
+    # Per-sample loss so subphrase weight (batch[3]) can scale each example before .mean()
     loss_fxn = nn.CrossEntropyLoss(reduction='none')
 
     total_steps = EPOCHS * len(train_loader)
@@ -70,10 +77,6 @@ def main():
     scheduler = get_linear_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
     best_dev_acc = 0.0
-
-    #TEMP
-    # torch.save(model.state_dict(), "checkpoints/bert_mqnli_pretrained.pt")
-    # print("SAVED")
 
     for epoch in range(EPOCHS):
         model.train()

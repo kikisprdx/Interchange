@@ -1,3 +1,5 @@
+"""Fine-tunes BERT on the arithmetic sign-classification task."""
+
 import os
 
 import torch
@@ -24,12 +26,14 @@ LR_WARMUP_RATIO = 0.5
 
 
 def evaluate(model, dataset, device, loss_fxn):
+    """Return (accuracy, mean_loss) on dataset."""
     loader = DataLoader(dataset, batch_size=64, shuffle=False)
     correct = total = 0
     total_loss = 0.0
     model.eval()
     with torch.no_grad():
         for batch in loader:
+            # Batch: (input_ids, token_type_ids, attention_mask, raw_arith, label)
             input_ids = batch[0].to(device)
             token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)
@@ -42,6 +46,7 @@ def evaluate(model, dataset, device, loss_fxn):
 
 
 def main():
+    """Build vocab, load data, train, and save fine-tuned checkpoint."""
     device = torch.device(
         "cuda"
         if torch.cuda.is_available()
@@ -97,6 +102,7 @@ def main():
         bar = tqdm(train_loader, desc=f"epoch {epoch + 1}/{EPOCHS}", leave=False)
 
         for step, batch in enumerate(bar, 1):
+            # Batch: (input_ids, token_type_ids, attention_mask, raw_arith, label)
             input_ids = batch[0].to(device)
             token_type_ids = batch[1].to(device)
             attention_mask = batch[2].to(device)

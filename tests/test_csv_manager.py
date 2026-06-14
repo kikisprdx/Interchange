@@ -1,3 +1,5 @@
+"""Pytest suite for `managers/arithmetic.py` CSVExperimentManager."""
+
 import os
 import pytest
 import tempfile
@@ -16,11 +18,13 @@ DEFAULT_OPTS = {
 
 @pytest.fixture
 def csv_path(tmp_path):
+    """Return a temp path for the experiments CSV."""
     return str(tmp_path / "experiments.csv")
 
 
 @pytest.fixture
 def manager(csv_path):
+    """Return a fresh CSVExperimentManager backed by the temp CSV."""
     return CSVExperimentManager(csv_path, DEFAULT_OPTS)
 
 
@@ -48,6 +52,7 @@ def test_insert_returns_sequential_ids(manager):
 def test_insert_defaults_status_to_ready(manager):
     row_id = manager.insert({"abstraction": "a"})
     rows = manager.query(id=row_id)
+    # Status stored as string in CSV
     assert int(rows[0]["status"]) == STATUS_READY
 
 
@@ -55,6 +60,7 @@ def test_update_patches_field(manager):
     row_id = manager.insert({"abstraction": "a"})
     manager.update({"status": STATUS_INTERCHANGE_DONE}, row_id)
     rows = manager.query(id=row_id)
+    # Status stored as string in CSV
     assert int(rows[0]["status"]) == STATUS_INTERCHANGE_DONE
 
 
