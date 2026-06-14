@@ -68,8 +68,10 @@ def plot_intervention_success_rate(df, dataset_name):
     
     colors = plt.cm.tab20(np.linspace(0, 1, len(success_rates.index)))
     
+    plot_columns = [col.split('_')[-1] for col in success_rates.columns]
+    
     for i, high_node in enumerate(success_rates.index):
-        ax.plot(success_rates.columns, success_rates.loc[high_node], marker='o', color=colors[i], label=high_node)
+        ax.plot(plot_columns, success_rates.loc[high_node], marker='o', color=colors[i], label=high_node)
   
     ax.legend(title="Abstract Variable", bbox_to_anchor=(1.05, 1), loc='center left')
     ax.set_title("Intervention Success Rate by Layer")
@@ -249,14 +251,26 @@ def plot_clique_sizes(df, dataset_name):
     
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    for high_node in clique_pivot.index:
-        ax.plot(clique_pivot.columns, clique_pivot.loc[high_node], marker='s', linestyle='--', label=high_node)
+    x_positions = np.arange(len(clique_pivot.columns))
+    jitter_amount = 0.02
+    
+    for i, high_node in enumerate(clique_pivot.index):
+        if high_node == 'sign':
+            jitter = -jitter_amount
+        elif high_node == 'result':
+            jitter = jitter_amount
+        else:
+            jitter = 0
+        ax.plot(x_positions + jitter, clique_pivot.loc[high_node], marker='o', linestyle='-', label=high_node)
         
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels([col.split('_')[-1] for col in clique_pivot.columns])
+    
     ax.set_title("Maximum Clique Size by Layer")
     ax.set_ylabel("Clique Size (% of total examples)")
     ax.set_xlabel("Neural Model Layer")
     # change location to outside of plot
-    ax.legend(title="Abstract Variable", loc='center left', bbox_to_anchor=(1.3, 1))
+    ax.legend(title="Abstract Variable", loc='upper left')
     
     plt.xticks(rotation=45)
     plt.tight_layout()
